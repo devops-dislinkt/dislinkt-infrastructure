@@ -1,0 +1,32 @@
+version: '2.4'
+
+services:
+  user-profile:
+    build:
+      context: ../user-profile
+      dockerfile: Dockerfile
+    environment:
+      - FLASK_APP=app
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    restart: always
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: /usr/bin/pg_isready
+      interval: 5s
+      timeout: 10s
+      retries: 120
+    user: postgres
+
+volumes:
+  db-data:
