@@ -1,6 +1,35 @@
 version: '2.4'
 
 services:
+  # Auth server
+  auth-server:
+    build:
+      context: ../dislinkt-auth
+      dockerfile: Dockerfile
+    restart: on-failure
+    ports:
+      - 8090:8090
+    expose:
+      - 8090
+    depends_on:
+      - auth-server-db
+    environment:
+      FLASK_DATABASE_HOST: auth-server-db
+      FLASK_SECRET_KEY: secret
+    volumes:
+      - ../dislinkt-auth:/code
+
+  auth-server-db:
+    image: "mongo"
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - auth-server-db-data:/foo
+  
+  # User profile server
   user-profile:
     build:
       context: ../user-profile
@@ -91,6 +120,8 @@ services:
       - kafka1:/var/lib/kafka/data
 
 volumes:
+  auth-server-db-data:
+    name: auth-server-db-data
   db-data:
     name: user-profile-data
   zoo:
