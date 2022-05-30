@@ -11,11 +11,17 @@ services:
       - 8090:8090
     expose:
       - 8090
+    networks:
+      - auth-server-net
+      - kafka-net
     depends_on:
+      - kafka1
       - auth-server-db
     environment:
       FLASK_DATABASE_HOST: auth-server-db
       FLASK_SECRET_KEY: secret
+      KAFKA: kafka1:9092
+      KAFKA_TOPIC: ${KAFKA_TOPIC}
     volumes:
       - ../dislinkt-auth:/code
 
@@ -23,6 +29,8 @@ services:
     image: "mongo"
     ports:
       - 27017:27017
+    networks:
+      - auth-server-net
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: password
@@ -51,14 +59,14 @@ services:
       - FLASK_APP=user_profile_service
       - FLASK_DEBUG=1
     depends_on:
-      db:
+      user-profile-db:
         condition: service_healthy
       kafka1:
         condition: service_healthy
     volumes:
       - ../user-profile:/home/service
 
-  db:
+  user-profile-db:
     image: postgres:${POSTGRES_VERSION}
     restart: always
     networks:
@@ -136,4 +144,6 @@ networks:
     name: user-profile-net
     driver: bridge
   kafka-net:
+    driver: bridge
+  auth-server-net:
     driver: bridge
