@@ -1,0 +1,9 @@
+[
+    {"_id": "admin", "role": "admin", "password": "pbkdf2:sha256:260000$AiFrKhA2Jjxjiuqf$c056305a154079c33f8803db86ec90d00b52667b526f9fff23d4f958a766a610"},
+    {"_id": "nikola", "role": "user", "password": "pbkdf2:sha256:260000$9Yf44Ebv1K9peBvo$b6d0572f685bb207bb3549e8e108e3d5d0cf80e601b3280d39742115f5f2845c"},
+    {"_id": "djura", "role": "user", "password": "pbkdf2:sha256:260000$gdX22YsGWbtX9gLH$104d3bcf843e42d765f2c594a263550d79f06714ad92127a18491604388f3792"},
+    {"_id": "miki", "role": "user", "password": "pbkdf2:sha256:260000$W4sYTkfQZ3JOv1vN$fec438a893f0ba16efae6f6250fed525d1cbfb8d2aa8e224f737cd25c2137429"},
+    {"_id": "boba", "role": "user", "password": "pbkdf2:sha256:260000$0nb5y4KLHz1vA1ez$7f2292af620c5a7ccf8b9ea4bb44a553a09ff036b9a79247ef6cf1f08f80ecaf"},
+    {"_id": "ana", "role": "user", "password": "pbkdf2:sha256:260000$uCys0nUSjxQ7dzMM$f083a3fcaf20dba4d57506b3f47fd513ef624c1192da5e5ca330709bd00f07bb"},
+    {"_id": "zika", "role": "user", "password": "pbkdf2:sha256:260000$ve6tkWlhgV0ct3b8$8184952e5c4658a99760288de6ce8e1f2a4b290b2851168052df507c9dcb7d47"}
+]

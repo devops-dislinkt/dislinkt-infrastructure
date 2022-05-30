@@ -37,6 +37,14 @@ services:
     volumes:
       - auth-server-db-data:/foo
   
+  auth-server-db-import-data:
+    image: "mongo"
+    volumes:
+      - ./data:/data
+    depends_on:
+      - auth-server-db
+    command: /data/auth-server-import.sh
+
   # User profile server
   user-profile:
     build:
