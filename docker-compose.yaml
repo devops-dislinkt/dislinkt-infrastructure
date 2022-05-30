@@ -18,10 +18,11 @@ services:
       - kafka1
       - auth-server-db
     environment:
-      FLASK_DATABASE_HOST: auth-server-db
-      FLASK_SECRET_KEY: secret
-      KAFKA: kafka1:9092
-      KAFKA_TOPIC: ${KAFKA_TOPIC}
+      - FLASK_DATABASE_HOST=auth-server-db
+      - FLASK_SECRET_KEY=secret
+      - KAFKA=kafka1:9092
+      - KAFKA_TOPIC=${KAFKA_TOPIC}
+      - PYTHONUNBUFFERED=1
     volumes:
       - ../dislinkt-auth:/code
 
@@ -66,6 +67,7 @@ services:
       - KAFKA_TOPIC=${KAFKA_TOPIC}
       - FLASK_APP=user_profile_service
       - FLASK_DEBUG=1
+      - PYTHONUNBUFFERED=1
     depends_on:
       user-profile-db:
         condition: service_healthy
