@@ -1,4 +1,4 @@
-version: '2.4'
+version: '3.9'
 
 services:
   # Auth server
@@ -14,6 +14,7 @@ services:
     networks:
       - auth-server-net
       - kafka-net
+      - api-gateway-net
     depends_on:
       - kafka1
       - auth-server-db
@@ -54,6 +55,7 @@ services:
     networks:
       - user-profile-net
       - kafka-net
+      - api-gateway-net
     ports:
       - "5000:5000"
     environment:
@@ -73,6 +75,7 @@ services:
         condition: service_healthy
     volumes:
       - ../user-profile:/home/service
+
 
   user-profile-db:
     image: postgres:${POSTGRES_VERSION}
@@ -135,6 +138,16 @@ services:
     volumes:
       - kafka1:/var/lib/kafka/data
 
+  api-gateway:
+    image: nginx:1.13-alpine
+    restart: on-failure
+    networks:
+      - api-gateway-net
+    ports:
+      - 8080:8080
+    volumes:
+      - ./nginx/ngnix.conf:/etc/nginx/nginx.conf
+
 volumes:
   auth-server-db-data:
     name: auth-server-db-data
@@ -154,4 +167,6 @@ networks:
   kafka-net:
     driver: bridge
   auth-server-net:
+    driver: bridge
+  api-gateway-net:
     driver: bridge
