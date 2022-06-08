@@ -139,14 +139,17 @@ services:
       - kafka1:/var/lib/kafka/data
 
   api-gateway:
-    image: nginx:1.13-alpine
+    build:
+      context: ../api-gateway
+      dockerfile: Dockerfile
     restart: on-failure
     networks:
       - api-gateway-net
     ports:
       - 8080:8080
-    volumes:
-      - ./nginx/ngnix.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - user-profile
+      - auth-server
 
 volumes:
   auth-server-db-data:
