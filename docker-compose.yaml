@@ -52,6 +52,7 @@ services:
     build:
       context: ../user-profile
       dockerfile: Dockerfile
+    image:  specnazm/dislinkt-user-profile:latest
     restart: on-failure
     networks:
       - user-profile-net
