@@ -13,9 +13,7 @@ services:
       dockerfile: Dockerfile
     restart: on-failure
     ports:
-      - 8090:8090
-    expose:
-      - 8090
+      - "8090:8090"
     networks:
       - auth-server-net
       - kafka-net
@@ -37,7 +35,7 @@ services:
   auth-server-db:
     image: "mongo"
     ports:
-      - 27017:27017
+      - "27017:27017"
     networks:
       - auth-server-net
       - monitoring
@@ -192,12 +190,11 @@ volumes:
 networks:
   user-profile-net:
     name: user-profile-net
-    driver: bridge
   kafka-net:
-    driver: bridge
+    name: kafka-net
   auth-server-net:
-    driver: bridge
+    name: auth-server-net
   api-gateway-net:
-    driver: bridge
+    name: api-gateway-net
   monitoring:
     external: true
