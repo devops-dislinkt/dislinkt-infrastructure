@@ -120,7 +120,6 @@ services:
       - "2181:2181"
     networks:
       - kafka-net
-      - monitoring
     environment:
       ZOO_MY_ID: 1
       ZOO_PORT: 2181
@@ -128,7 +127,6 @@ services:
     volumes:
       - zoo:/data
       - zoolog:/datalog
-    logging: *fluent-bit
 
 
   kafka1:
