@@ -1,0 +1,25 @@
+[
+    {
+        "_id": "629b7ec3bc0bb441584070f7",        
+        "username": "user1",
+        "title": "Post title",
+        "content": "text content",
+        "images": [
+          "img1",
+          "img2"
+        ],
+        "links": [
+          "link1",
+          "link2"
+        ],
+        "like": [],
+        "dislike": [],
+        "comments": [
+          {
+            "username": "user2",
+            "comment": "comment2"
+          }
+        ],
+        "date": "1654364899000",
+      }
+]
