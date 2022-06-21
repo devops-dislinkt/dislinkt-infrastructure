@@ -149,6 +149,25 @@ services:
     user: postgres
 
 
+#Messaging-service
+  messages:
+    build:
+      context: ../messaging
+      dockerfile: Dockerfile
+    restart: on-failure
+    networks:
+      - api-gateway-net
+    ports:
+      - 8092:8092
+    environment:
+      - FLASK_APP=app
+      - FLASK_DEBUG=1
+      - PYTHONUNBUFFERED=1
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+    volumes:
+      - ../messaging:/home/service
+
+
 #Notifications-service
   notifications:
     build:
