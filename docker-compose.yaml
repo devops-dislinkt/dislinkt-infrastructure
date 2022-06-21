@@ -16,8 +16,10 @@ services:
       - kafka-net
       - api-gateway-net
     depends_on:
-      - kafka1
-      - post-server-db
+        kafka1:
+          condition: service_healthy
+        post-server-db:
+          condition: service_started
     environment:
       - FLASK_DATABASE_HOST=post-server-db
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
