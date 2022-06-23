@@ -260,15 +260,27 @@ services:
       - kafka1:/var/lib/kafka/data
 
   api-gateway:
-    image: specnazm/dislinkt-gateway:1.0.0-dev.1
+    image: specnazm/dislinkt-gateway:1.0.0
     restart: on-failure
     networks:
       - api-gateway-net
+      - front-gateway
     ports:
       - 8080:8080
     depends_on:
       - user-profile
       - auth-server
+
+  front:
+    build:
+      context: ../dislinkt-front/
+    restart: on-failure
+    ports:
+      - 4200:4200
+    depends_on:
+      - api-gateway
+    networks:
+      - front-gateway
 
 volumes:
   auth-server-db-data:
@@ -299,4 +311,6 @@ networks:
   api-gateway-net:
     driver: bridge
   notifications-net:
+    driver: bridge
+  front-gateway:
     driver: bridge
