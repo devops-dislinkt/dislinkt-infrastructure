@@ -3,9 +3,7 @@ version: '3.9'
 services:
   # Post server
   post-server:
-    build:
-      context: ../user-post
-      dockerfile: Dockerfile
+    image: specnazm/dislinkt-user-post:1.0.0-dev.1
     restart: on-failure
     ports:
       - 8070:8070
@@ -19,15 +17,13 @@ services:
         kafka1:
           condition: service_healthy
         post-server-db:
-          condition: service_started
+          condition: service_healthy
     environment:
       - FLASK_DATABASE_HOST=post-server-db
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
       - KAFKA=kafka1:9092
       - KAFKA_TOPIC=${KAFKA_NOT_TOPIC}
       - PYTHONUNBUFFERED=1
-    volumes:
-      - ../user-post:/code
 
   post-server-db:
     image: "mongo"
@@ -41,6 +37,12 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
     volumes:
       - post-server-db-data:/foo
+    healthcheck:
+      test: echo 'db.runCommand({serverStatus:1}).ok' | mongo admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --quiet | grep 1
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   post-server-db-import-data:
     image: "mongo"
@@ -52,9 +54,7 @@ services:
 
   # Auth server
   auth-server:
-    build:
-      context: ../dislinkt-auth
-      dockerfile: Dockerfile
+    image: specnazm/dislinkt-auth:1.0.0-dev.1
     restart: on-failure
     ports:
       - 8090:8090
@@ -65,16 +65,16 @@ services:
       - kafka-net
       - api-gateway-net
     depends_on:
-      - kafka1
-      - auth-server-db
+        auth-server-db:
+          condition: service_healthy
+        kafka1:
+          condition: service_healthy
     environment:
       - FLASK_DATABASE_HOST=auth-server-db
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
       - KAFKA=kafka1:9092
       - KAFKA_TOPIC=${KAFKA_TOPIC}
       - PYTHONUNBUFFERED=1
-    volumes:
-      - ../dislinkt-auth:/code
 
   auth-server-db:
     image: "mongo"
@@ -83,11 +83,17 @@ services:
     networks:
       - auth-server-net
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - auth-server-db-data:/foo
-  
+    healthcheck:
+      test: echo 'db.runCommand({serverStatus:1}).ok' | mongo admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --quiet | grep 1
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+      
   auth-server-db-import-data:
     image: "mongo"
     volumes:
@@ -98,10 +104,7 @@ services:
 
   # User profile server
   user-profile:
-    build:
-      context: ../user-profile
-      dockerfile: Dockerfile
-    image:  specnazm/dislinkt-user-profile:latest
+    image:  specnazm/dislinkt-user-profile:1.1.0-dev.1
     restart: on-failure
     networks:
       - user-profile-net
@@ -126,8 +129,6 @@ services:
         condition: service_healthy
       kafka1:
         condition: service_healthy
-    volumes:
-      - ../user-profile:/home/service
 
 
   user-profile-db:
@@ -153,9 +154,7 @@ services:
 
 #Messaging-service
   messages:
-    build:
-      context: ../messaging
-      dockerfile: Dockerfile
+    image: specnazm/dislinkt-messages:1.1.0-dev.1
     restart: on-failure
     networks:
       - api-gateway-net
@@ -166,15 +165,11 @@ services:
       - FLASK_DEBUG=1
       - PYTHONUNBUFFERED=1
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
-    volumes:
-      - ../messaging:/home/service
 
 
 #Notifications-service
   notifications:
-    build:
-      context: ../notifications
-      dockerfile: Dockerfile
+    image: specnazm/dislinkt-notifications:1.0.0-dev.1
     restart: on-failure
     networks:
       - notifications-net
@@ -201,8 +196,6 @@ services:
         condition: service_healthy
       kafka1:
         condition: service_healthy
-    volumes:
-      - ../notifications:/home/service
 
 
   notification-db:
@@ -267,9 +260,7 @@ services:
       - kafka1:/var/lib/kafka/data
 
   api-gateway:
-    build:
-      context: ../api-gateway
-      dockerfile: Dockerfile
+    image: specnazm/dislinkt-gateway:1.0.0-dev.1
     restart: on-failure
     networks:
       - api-gateway-net
