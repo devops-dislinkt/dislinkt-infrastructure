@@ -260,10 +260,11 @@ services:
       - kafka1:/var/lib/kafka/data
 
   api-gateway:
-    image: specnazm/dislinkt-gateway:1.0.0-dev.1
+    image: specnazm/dislinkt-gateway:1.0.0
     restart: on-failure
     networks:
       - api-gateway-net
+      - front-gateway
     ports:
       - 8080:8080
     depends_on:
