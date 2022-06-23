@@ -270,6 +270,17 @@ services:
       - user-profile
       - auth-server
 
+  front:
+    build:
+      context: ../dislinkt-front/
+    restart: on-failure
+    ports:
+      - 4200:4200
+    depends_on:
+      - api-gateway
+    networks:
+      - front-gateway
+
 volumes:
   auth-server-db-data:
     name: auth-server-db-data
@@ -299,4 +310,6 @@ networks:
   api-gateway-net:
     driver: bridge
   notifications-net:
+    driver: bridge
+  front-gateway:
     driver: bridge
