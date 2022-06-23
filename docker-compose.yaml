@@ -1,11 +1,60 @@
 version: '3.9'
 
 services:
+  # Post server
+  post-server:
+    image: specnazm/dislinkt-user-post:1.0.0-dev.1
+    restart: on-failure
+    ports:
+      - 8070:8070
+    expose:
+      - 8070
+    networks:
+      - post-server-net
+      - kafka-net
+      - api-gateway-net
+    depends_on:
+        kafka1:
+          condition: service_healthy
+        post-server-db:
+          condition: service_healthy
+    environment:
+      - FLASK_DATABASE_HOST=post-server-db
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+      - KAFKA=kafka1:9092
+      - KAFKA_TOPIC=${KAFKA_NOT_TOPIC}
+      - PYTHONUNBUFFERED=1
+
+  post-server-db:
+    image: "mongo"
+    command: mongod --port 27018
+    ports:
+        - '27018:27018'
+    networks:
+      - post-server-net
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - post-server-db-data:/foo
+    healthcheck:
+      test: echo 'db.runCommand({serverStatus:1}).ok' | mongo admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --quiet | grep 1
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  post-server-db-import-data:
+    image: "mongo"
+    volumes:
+      - ./data:/data
+    depends_on:
+      - post-server-db
+    command: /data/post-server-import.sh
+
   # Auth server
   auth-server:
-    build:
-      context: ../dislinkt-auth
-      dockerfile: Dockerfile
+    image: specnazm/dislinkt-auth:1.0.0-dev.1
     restart: on-failure
     ports:
       - 8090:8090
@@ -16,16 +65,16 @@ services:
       - kafka-net
       - api-gateway-net
     depends_on:
-      - kafka1
-      - auth-server-db
+        auth-server-db:
+          condition: service_healthy
+        kafka1:
+          condition: service_healthy
     environment:
       - FLASK_DATABASE_HOST=auth-server-db
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
       - KAFKA=kafka1:9092
       - KAFKA_TOPIC=${KAFKA_TOPIC}
       - PYTHONUNBUFFERED=1
-    volumes:
-      - ../dislinkt-auth:/code
 
   auth-server-db:
     image: "mongo"
@@ -34,11 +83,17 @@ services:
     networks:
       - auth-server-net
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - auth-server-db-data:/foo
-  
+    healthcheck:
+      test: echo 'db.runCommand({serverStatus:1}).ok' | mongo admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --quiet | grep 1
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+      
   auth-server-db-import-data:
     image: "mongo"
     volumes:
@@ -49,9 +104,7 @@ services:
 
   # User profile server
   user-profile:
-    build:
-      context: ../user-profile
-      dockerfile: Dockerfile
+    image:  specnazm/dislinkt-user-profile:1.1.0-dev.1
     restart: on-failure
     networks:
       - user-profile-net
@@ -76,8 +129,6 @@ services:
         condition: service_healthy
       kafka1:
         condition: service_healthy
-    volumes:
-      - ../user-profile:/home/service
 
 
   user-profile-db:
@@ -98,6 +149,73 @@ services:
       retries: 120
     volumes:
       - db-data:/var/lib/postgresql/data
+    user: postgres
+
+
+#Messaging-service
+  messages:
+    image: specnazm/dislinkt-messages:1.1.0-dev.1
+    restart: on-failure
+    networks:
+      - api-gateway-net
+    ports:
+      - 8092:8092
+    environment:
+      - FLASK_APP=app
+      - FLASK_DEBUG=1
+      - PYTHONUNBUFFERED=1
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+
+
+#Notifications-service
+  notifications:
+    image: specnazm/dislinkt-notifications:1.0.0-dev.1
+    restart: on-failure
+    networks:
+      - notifications-net
+      - kafka-net
+      - api-gateway-net
+    ports:
+      - 8091:8091
+    environment:
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_DOMAIN=${DATABASE_DOMAIN_NOT}
+      - DATABASE_SCHEMA=${DATABASE_SCHEMA_NOT}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - KAFKA1=kafka1:9092
+      - KAFKA_TOPIC=${KAFKA_NOT_TOPIC}
+      - FLASK_APP=app
+      - FLASK_DEBUG=1
+      - PYTHONUNBUFFERED=1
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
+      - SERVICE_HOST=user-profile
+      - SERVICE_PORT=5000
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+
+
+  notification-db:
+    image: postgres:${POSTGRES_VERSION}
+    restart: always
+    networks:
+      - notifications-net
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB_NOT}
+    healthcheck:
+      test: /usr/bin/pg_isready
+      interval: 5s
+      timeout: 10s
+      retries: 120
+    volumes:
+      - db-data-notif:/var/lib/postgresql/data
     user: postgres
 
   zoo:
@@ -142,9 +260,7 @@ services:
       - kafka1:/var/lib/kafka/data
 
   api-gateway:
-    build:
-      context: ../api-gateway
-      dockerfile: Dockerfile
+    image: specnazm/dislinkt-gateway:1.0.0-dev.1
     restart: on-failure
     networks:
       - api-gateway-net
@@ -157,6 +273,8 @@ services:
 volumes:
   auth-server-db-data:
     name: auth-server-db-data
+  post-server-db-data:
+    name: post-server-db-data
   db-data:
     name: user-profile-data
   zoo:
@@ -165,6 +283,8 @@ volumes:
     name: zoolog-data
   kafka1:
     name: kafka1-data
+  db-data-notif:
+    name: db-data-notif
 
 networks:
   user-profile-net:
@@ -174,5 +294,9 @@ networks:
     driver: bridge
   auth-server-net:
     driver: bridge
+  post-server-net:
+    driver: bridge
   api-gateway-net:
+    driver: bridge
+  notifications-net:
     driver: bridge
